@@ -4,6 +4,7 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -59,11 +60,30 @@ public class ChatView extends VerticalLayout {
 
     private void addMessage(String sender, String content) {
         Div messageDiv = new Div();
-        messageDiv.setText(sender + ": " + content);
-        messageDiv.addClassName(sender.equals("User") ? "user-message" : "bot-message");
-        chatContainer.add(messageDiv);
+        messageDiv.setText(content);
+    
+        Image profilePicture = new Image();
+        profilePicture.setClassName("profile-picture");
+    
+        HorizontalLayout messageLayout;
+        if ("User".equals(sender)) {
+            profilePicture.setSrc("images/user.png");
+            messageLayout = new HorizontalLayout(messageDiv, profilePicture);
+            messageLayout.addClassName("user-message-container");
+            messageDiv.addClassName("user-message");
+        } else {
+            profilePicture.setSrc("images/bot.png"); 
+            messageLayout = new HorizontalLayout(profilePicture, messageDiv);
+            messageLayout.addClassName("bot-message-container");
+            messageDiv.addClassName("bot-message");
+        }
+    
+        chatContainer.add(messageLayout);
         scrollToEnd();
     }
+    
+    
+    
 
     private void scrollToEnd() {
         getElement().executeJs("this.querySelector('#chat-container').scrollTop = this.querySelector('#chat-container').scrollHeight;");
