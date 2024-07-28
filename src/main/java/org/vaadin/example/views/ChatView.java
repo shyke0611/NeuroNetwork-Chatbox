@@ -9,7 +9,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
-import org.vaadin.example.OpenAI;
+import org.vaadin.example.ChatService;
 
 @Route("")
 @CssImport("./css/styles.css")
@@ -17,10 +17,11 @@ public class ChatView extends VerticalLayout {
 
     private Div chatContainer;
     private TextField messageInput;
-    private final OpenAI openAI;
+    private final ChatService chatService;
 
-    public ChatView(OpenAI openAI) {
-        this.openAI = openAI;
+    
+    public ChatView(ChatService chatService) {
+        this.chatService = chatService;
 
         chatContainer = new Div();
         chatContainer.setId("chat-container");
@@ -38,7 +39,7 @@ public class ChatView extends VerticalLayout {
         add(chatContainer, inputLayout);
         setSizeFull();
         setHorizontalComponentAlignment(Alignment.CENTER, chatContainer, inputLayout);
-        
+
         messageInput.addKeyDownListener(Key.ENTER, event -> onSubmit());
     }
 
@@ -48,23 +49,18 @@ public class ChatView extends VerticalLayout {
             addMessage("User", userInput);
             messageInput.clear();
 
-            openAI.sendAsync(userInput).whenComplete((messages, throwable) -> {
-                if (throwable == null) {
-                    getUI().ifPresent(ui -> ui.access(() -> {
-                        messages.forEach(message -> addMessage("Bot", message.getContent()));
-                    }));
-                }
-            });
+            String botResponse = chatService.getResponse(userInput);
+            addMessage("Bot", botResponse);
         }
     }
 
     private void addMessage(String sender, String content) {
         Div messageDiv = new Div();
         messageDiv.setText(content);
-    
+
         Image profilePicture = new Image();
         profilePicture.setClassName("profile-picture");
-    
+
         HorizontalLayout messageLayout;
         if ("User".equals(sender)) {
             profilePicture.setSrc("images/user.png");
@@ -72,18 +68,15 @@ public class ChatView extends VerticalLayout {
             messageLayout.addClassName("user-message-container");
             messageDiv.addClassName("user-message");
         } else {
-            profilePicture.setSrc("images/bot.png"); 
+            profilePicture.setSrc("images/bot.png");
             messageLayout = new HorizontalLayout(profilePicture, messageDiv);
             messageLayout.addClassName("bot-message-container");
             messageDiv.addClassName("bot-message");
         }
-    
+
         chatContainer.add(messageLayout);
         scrollToEnd();
     }
-    
-    
-    
 
     private void scrollToEnd() {
         getElement().executeJs("this.querySelector('#chat-container').scrollTop = this.querySelector('#chat-container').scrollHeight;");
